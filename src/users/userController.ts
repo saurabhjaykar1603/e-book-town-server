@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
+import User from "./userModel";
+import bcrypt from "bcrypt"
 
-const createUser = (req: Request, res: Response, next: NextFunction) => {
+const createUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
@@ -9,7 +11,12 @@ const createUser = (req: Request, res: Response, next: NextFunction) => {
       return next(error);
     }
     // Create user logic here
-    res.status(201).json({ message: "User created successfully" });
+    const user = await User.findOne({ email: email });
+    if (user) {
+      const error = createHttpError(400, "Email already exist");
+      return next(error);
+    }
+    const hasshPassword = await bcrypt.hash(password,10,)
   } catch (error) {
     console.log(error);
   }
