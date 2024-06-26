@@ -6,6 +6,17 @@ import bookModel from "./bookModel";
 import fs from "fs";
 import { AuthRequest } from "../middlewares/authMiddleware";
 
+const extractPublicId = (url: string) => {
+  const parts = url.split("/");
+  const fileNameWithExtension = parts[parts.length - 1];
+  const folderPath = parts
+    .slice(parts.length - 3, parts.length - 1)
+    .filter((part) => !part.startsWith("v"))
+    .join("/");
+    const publicId = folderPath + "/" + (fileNameWithExtension.split(".")[1] === "pdf" ? fileNameWithExtension : fileNameWithExtension.split(".")[0]) ;
+  return publicId;
+};
+
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
   const { title, genre } = req.body;
 
@@ -81,4 +92,107 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { createBook };
+const updateBook = async (req: Request, res: Response, next: NextFunction) => {
+  const { title, genre } = req.body;
+  const { bookId } = req.params;
+
+  if (!genre || typeof genre !== "string") {
+    return next(createHttpError(400, "Invalid or missing genre"));
+  }
+  if (!title || typeof title !== "string") {
+    return next(createHttpError(400, "Invalid or missing title"));
+  }
+
+  try {
+    const book = await bookModel.findById({ _id: bookId });
+    if (!book) {
+      return next(createHttpError(404, "Book not found"));
+    }
+
+    const _req = req as AuthRequest;
+    if (book.author.toString() !== _req.userId.toString()) {
+      return next(
+        createHttpError(403, "You are not authorized to update this book")
+      );
+    }
+
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    let completeCoverImage = book.coverImage;
+    let completeFileName = book.file;
+
+    if (files?.coverImage) {
+      const coverImageFile = files.coverImage[0];
+      const coverImageMineType = coverImageFile.mimetype.split("/").at(-1);
+      const filePath = path.resolve(
+        __dirname,
+        "../../public/data/uploads/" + coverImageFile.filename
+      );
+      // Delete the previous cover image from Cloudinary
+      if (book.coverImage) {
+        const coverImagePublicId = extractPublicId(book.coverImage);
+        console.log("pdf file coverImagePublicId id==>",coverImagePublicId);
+
+        await cloudinary.uploader.destroy(coverImagePublicId);
+      }
+      const uploadResult = await cloudinary.uploader.upload(filePath, {
+        filename_override: coverImageFile.filename,
+        folder: "book-covers",
+        format: coverImageMineType,
+      });
+
+      completeCoverImage = uploadResult.secure_url;
+      await fs.promises.unlink(filePath);
+    }
+
+    if (files?.file) {
+      const file = files.file[0];
+      const fileMineType = file.mimetype.split("/").at(-1);
+      const filePath = path.resolve(
+        __dirname,
+        "../../public/data/uploads/" + file.filename
+      );
+      // Delete the previous file from Cloudinary
+      if (book.file) {
+        const filePublicId = extractPublicId(book.file);
+        console.log("pdf file public id==>",filePublicId);
+        
+        await cloudinary.uploader.destroy(filePublicId, {
+          resource_type: "raw",
+        });
+      }
+
+      const uploadResult = await cloudinary.uploader.upload(filePath, {
+        filename_override: file.filename,
+        folder: "book-pdfs",
+        format: fileMineType,
+        resource_type: "raw",
+      });
+
+      completeFileName = uploadResult.secure_url;
+      await fs.promises.unlink(filePath);
+    }
+
+    const updatedBook = await bookModel.findByIdAndUpdate(
+      { _id: bookId },
+      {
+        title,
+        genre,
+        coverImage: completeCoverImage,
+        file: completeFileName,
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      status: "ok",
+      data: updatedBook,
+    });
+  } catch (error) {
+    console.error(error);
+    return next(
+      createHttpError(500, "An error occurred while updating the book")
+    );
+  }
+};
+
+export { createBook, updateBook };
