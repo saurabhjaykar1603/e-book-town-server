@@ -2,6 +2,7 @@ import { Router } from "express";
 import { createBook } from "./bookController";
 import multer from "multer";
 import path from "node:path";
+import authMiddleware from "../middlewares/authMiddleware";
 
 const bookRouter = Router();
 
@@ -14,6 +15,7 @@ const upload = multer({
 // routes
 bookRouter.post(
   "/create",
+  authMiddleware,
   upload.fields([
     {
       name: "coverImage",
