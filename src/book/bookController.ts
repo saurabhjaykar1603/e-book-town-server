@@ -13,7 +13,12 @@ const extractPublicId = (url: string) => {
     .slice(parts.length - 3, parts.length - 1)
     .filter((part) => !part.startsWith("v"))
     .join("/");
-    const publicId = folderPath + "/" + (fileNameWithExtension.split(".")[1] === "pdf" ? fileNameWithExtension : fileNameWithExtension.split(".")[0]) ;
+  const publicId =
+    folderPath +
+    "/" +
+    (fileNameWithExtension.split(".")[1] === "pdf"
+      ? fileNameWithExtension
+      : fileNameWithExtension.split(".")[0]);
   return publicId;
 };
 
@@ -130,7 +135,7 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
       // Delete the previous cover image from Cloudinary
       if (book.coverImage) {
         const coverImagePublicId = extractPublicId(book.coverImage);
-        console.log("pdf file coverImagePublicId id==>",coverImagePublicId);
+        console.log("pdf file coverImagePublicId id==>", coverImagePublicId);
 
         await cloudinary.uploader.destroy(coverImagePublicId);
       }
@@ -154,8 +159,8 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
       // Delete the previous file from Cloudinary
       if (book.file) {
         const filePublicId = extractPublicId(book.file);
-        console.log("pdf file public id==>",filePublicId);
-        
+        console.log("pdf file public id==>", filePublicId);
+
         await cloudinary.uploader.destroy(filePublicId, {
           resource_type: "raw",
         });
@@ -195,4 +200,19 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { createBook, updateBook };
+const listBooks = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const books = await bookModel.find().sort({ createdAt: -1 });
+    return res.status(200).json({
+      status: "ok",
+      data: books,
+      });
+      
+  
+  } catch (error) {
+    const Error = createHttpError(500, "Error While getting a books");
+    next(Error);
+  }
+};
+
+export { createBook, updateBook, listBooks };
