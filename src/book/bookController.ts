@@ -206,13 +206,30 @@ const listBooks = async (req: Request, res: Response, next: NextFunction) => {
     return res.status(200).json({
       status: "ok",
       data: books,
-      });
-      
-  
+    });
   } catch (error) {
     const Error = createHttpError(500, "Error While getting a books");
     next(Error);
   }
 };
+const getSingleBook = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const book = await bookModel.findById(req.params.id);
+    if (!book) {
+      return next(createHttpError(404, "Book not found"));
+    }
+    return res.status(200).json({
+      status: "ok",
+      data: book,
+    });
+  } catch (error) {
+    const Error = createHttpError(500, "Error While getting a book");
+    next(Error);
+  }
+};
 
-export { createBook, updateBook, listBooks };
+export { createBook, updateBook, listBooks, getSingleBook };
