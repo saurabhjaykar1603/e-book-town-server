@@ -23,7 +23,7 @@ const extractPublicId = (url: string) => {
 };
 
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
-  const { title, genre } = req.body;
+  const { title, genre, description } = req.body;
 
   // Validate title and genre
   if (!title || typeof title !== "string") {
@@ -32,6 +32,9 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
 
   if (!genre || typeof genre !== "string") {
     return next(createHttpError(400, "Invalid or missing genre"));
+  }
+  if (!description || typeof description !== "string") {
+    return next(createHttpError(400, "Invalid or missing description"));
   }
 
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -78,6 +81,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
       title,
       author: _req.userId,
       genre,
+      description,
       coverImage: uploadResult.secure_url,
       file: uploadBookPdfFileResult.secure_url,
     });
@@ -98,7 +102,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const updateBook = async (req: Request, res: Response, next: NextFunction) => {
-  const { title, genre } = req.body;
+  const { title, genre, description } = req.body;
   const { bookId } = req.params;
 
   if (!genre || typeof genre !== "string") {
@@ -182,6 +186,7 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
       {
         title,
         genre,
+        description,
         coverImage: completeCoverImage,
         file: completeFileName,
       },
@@ -202,7 +207,10 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 
 const listBooks = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const books = await bookModel.find().sort({ createdAt: -1 }).populate("author", "name");;
+    const books = await bookModel
+      .find()
+      .sort({ createdAt: -1 })
+      .populate("author", "name");
     return res.status(200).json({
       status: "ok",
       data: books,
@@ -218,7 +226,9 @@ const getSingleBook = async (
   next: NextFunction
 ) => {
   try {
-    const book = await bookModel.findById(req.params.id).populate("author", "name");;
+    const book = await bookModel
+      .findById(req.params.id)
+      .populate("author", "name");
     if (!book) {
       return next(createHttpError(404, "Book not found"));
     }

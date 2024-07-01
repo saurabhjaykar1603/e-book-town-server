@@ -12,6 +12,10 @@ const bookSchema = new Schema<Book>(
       ref: "User",
       required: true,
     },
+    description: {
+      type: String,
+      required: true,
+    },
     coverImage: {
       type: String,
       required: true,

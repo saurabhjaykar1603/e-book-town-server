@@ -9,6 +9,6 @@ export interface Book {
   file: string;
   createdAt: Date;
   updatedAt: Date;
-  //   description: string;
-  //   rating: number;
+    description: string;
+    rating: number;
 }
