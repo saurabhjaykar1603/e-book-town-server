@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server.ts",
-    "start": "node server.ts",
-    "build":"tsc"
+    "start": "node ./dist/server.js",
+    "build": "tsc",
+    "prod": "npm install --legacy-peer-deps && tsc"
   },
   "author": "saurabh",
   "license": "ISC",
