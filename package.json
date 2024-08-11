@@ -4,7 +4,9 @@
   "description": "e book website",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon server.ts"
+    "dev": "nodemon server.ts",
+    "start": "node server.ts",
+    "build":"tsc"
   },
   "author": "saurabh",
   "license": "ISC",
