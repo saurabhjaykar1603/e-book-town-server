@@ -11,6 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: config.frontedDomain,
+    methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   })
 );
