@@ -37,7 +37,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
     return next(createHttpError(400, "Invalid or missing description"));
   }
 
-  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const files = req.files as { [f_idieldname: string]: Express.Multer.File[] };
   if (!files || !files.coverImage || !files.coverImage[0]) {
     return next(createHttpError(400, "Missing cover image"));
   }
